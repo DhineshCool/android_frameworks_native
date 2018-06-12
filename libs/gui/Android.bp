@@ -327,6 +327,12 @@ cc_library_shared {
     ],
 }
 
+cc_library_shared {
+    name: "libgui_vendor",
+    vendor: true,
+    defaults: ["libgui-defaults"]
+}
+
 // Used by media codec services exclusively as a static lib for
 // core bufferqueue support only.
 cc_library_static {
