@@ -1186,7 +1186,20 @@ GlobalSignals Scheduler::makeGlobalSignals() const {
             .idle = mPolicy.idleTimer == TimerState::Expired,
             .powerOnImminent = powerOnImminent};
 }
+#ifdef ($(TARGET_BROKEN_SF),true)
+ftl::Optional<FrameRateMode> Scheduler::getPreferredDisplayMode() {
+    std::lock_guard<std::mutex> lock(mPolicyLock);
+    // Make sure the stored mode is up to date.
+    if (mPolicy.modeOpt) {
+        const auto ranking =
+                leaderSelectorPtr()
+                        ->getRankedFrameRates(mPolicy.contentRequirements, makeGlobalSignals())
+                        .ranking;
 
+        mPolicy.modeOpt = ranking.front().frameRateMode;
+    }
+    return mPolicy.modeOpt;
+#else
 FrameRateMode Scheduler::getPreferredDisplayMode() {
     std::lock_guard<std::mutex> lock(mPolicyLock);
     const auto frameRateMode =
@@ -1199,6 +1212,7 @@ FrameRateMode Scheduler::getPreferredDisplayMode() {
     mPolicy.modeOpt = frameRateMode;
 
     return frameRateMode;
+#endif
 }
 
 void Scheduler::onNewVsyncPeriodChangeTimeline(const hal::VsyncPeriodChangeTimeline& timeline) {
